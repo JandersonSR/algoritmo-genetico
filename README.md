@@ -1,7 +1,5 @@
 # algoritmo-genetico
 
-install: 
-pip3 install matplotlib
-pip3 install streamlit
+read requirements.txt to install all the packages needed
 
-run: python -m streamlit run app.py
+and run the app with: python -m streamlit run app.py
