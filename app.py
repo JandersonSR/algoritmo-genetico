@@ -97,12 +97,34 @@ elif app_choice == "Otimização de Cardápio":
     generations = st.slider("Número de gerações", 10, 100, 30, key="menu_cardapio")
     population_size = st.slider("Tamanho da população", 5, 20, 10, key="menu_cardapio2")
 
-    if st.button("Gerar Cardápio"):
-        history = genetic_algorithm(generations=generations, population_size=population_size)
-        best_schedule, best_score = history[-1]
-        st.subheader(f"Melhor cardápio semanal (Fitness = {best_score})")
-        df = pd.DataFrame.from_dict(best_schedule, orient='index', columns=["Refeição"])
-        st.table(df)
+if st.button("Gerar Cardápio"):
+    history = genetic_algorithm(generations=generations, population_size=population_size)
+    best_schedule, best_score = history[-1]
+
+    st.subheader(f"Melhor cardápio semanal (Fitness = {best_score})")
+    df = pd.DataFrame.from_dict(best_schedule, orient='index', columns=["Refeição"])
+    st.table(df)
+
+    # --- Visualização da evolução do fitness ---
+    st.subheader("Evolução do Fitness ao longo das Gerações")
+    fitness_values = [score for _, score in history]
+
+    fig, ax = plt.subplots(figsize=(8,4))
+    ax.plot(range(1, generations+1), fitness_values, marker='o', color='blue')
+    ax.set_xlabel("Geração")
+    ax.set_ylabel("Fitness")
+    ax.set_title("Como o fitness melhora ao longo das gerações")
+    ax.grid(True)
+
+    st.pyplot(fig)
+
+    st.markdown("""
+    **Interpretação:**
+    - Cada ponto representa a **melhor solução** daquela geração.
+    - Fitness negativo indica **soluções abaixo do objetivo** (menos ideais).
+    - Fitness = 0 indica que o cardápio atingiu **exatamente a meta de calorias**.
+    - Conforme o AG evolui, os pontos tendem a subir em direção a 0.
+    """)
 
 # ============================
 # 3️⃣ Portfólio de Investimentos
