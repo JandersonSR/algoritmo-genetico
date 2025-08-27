@@ -4,4 +4,4 @@ install:
 pip3 install matplotlib
 pip3 install streamlit
 
-run: python -m streamlit run algoritmogenetico.py
+run: python -m streamlit run app.py
