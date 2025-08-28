@@ -47,28 +47,42 @@ def plot_fitness_evolution(fitness_values, generations, title="Evolução do Fit
     return fig
 
 # =========================
-# 1. Escala de Funcionários
+# 1️⃣ Escala de Funcionários
 # =========================
 funcionarios = ["Ana", "Bruno", "Carlos", "Daniela", "Eduardo"]
 dias = ["Seg", "Ter", "Qua", "Qui", "Sex"]
 
+# Cria um indivíduo: cada dia tem uma lista de funcionários (uma posição por funcionário)
 def create_individual_schedule():
-    return {dia: random.choice(funcionarios) for dia in dias}
+    return {dia: [random.choice(funcionarios) for _ in range(len(funcionarios))] for dia in dias}
 
+# Fitness: quanto mais equilibrados os turnos entre os funcionários, melhor
 def fitness_schedule(ind):
-    counts = {f: list(ind.values()).count(f) for f in funcionarios}
+    counts = {f: 0 for f in funcionarios}
+    for day_slots in ind.values():
+        for f in day_slots:
+            counts[f] = counts.get(f, 0) + 1
     diff = max(counts.values()) - min(counts.values())
     return -diff
 
+# Seleção: escolhe o melhor de 2 aleatórios
 def selection_schedule(pop, fitness):
     return max(random.sample(pop, 2), key=fitness)
 
+# Crossover: para cada dia, escolhe os turnos de um dos pais
 def crossover_schedule(p1, p2):
-    return {dia: (p1[dia] if random.random() < 0.5 else p2[dia]) for dia in dias}
+    child = {}
+    for dia in dias:
+        # Combina lista de turnos de forma aleatória por posição
+        child[dia] = [p1[dia][i] if random.random() < 0.5 else p2[dia][i] for i in range(len(funcionarios))]
+    return child
 
+# Mutação: altera um funcionário aleatório em um turno aleatório
 def mutation_schedule(ind, rate=0.2):
     if random.random() < rate:
-        ind[random.choice(dias)] = random.choice(funcionarios)
+        dia = random.choice(dias)
+        idx = random.randint(0, len(funcionarios)-1)
+        ind[dia][idx] = random.choice(funcionarios)
     return ind
 
 # =========================
@@ -148,12 +162,14 @@ tab1, tab2, tab3, tab4 = st.tabs(
     ["📅 Escala de Funcionários", "🥗 Cardápio", "💰 Portfólio", "📊 Explicação das Variáveis"]
 )
 
-generations = st.sidebar.slider("Número de Gerações", 10, 100, 30)
-population_size = st.sidebar.slider("Tamanho da População", 5, 50, 15)
+# generations = st.sidebar.slider("Número de Gerações", 10, 100, 30)
+# population_size = st.sidebar.slider("Tamanho da População", 5, 50, 15)
 
+# =========================
+# Interface Streamlit
+# =========================
 with tab1:
     st.header("📅 Escala de Funcionários")
-
     st.markdown("""
     Nesta aplicação, usamos um **Algoritmo Genético** para criar uma escala de funcionários.
     O objetivo é equilibrar os turnos entre todos, respeitando preferências e evitando sobrecarga.
@@ -161,21 +177,39 @@ with tab1:
 
     st.info(f"""
     🔹 Funcionários disponíveis: {len(funcionarios)}
-    🔹 Turnos por dia: 1 (manhã, tarde ou noite)
+    🔹 Turnos por dia: {len(funcionarios)}
     🔹 Dias da semana: {len(dias)}
     🔹 Total de posições a preencher: {len(funcionarios) * len(dias)}
     """)
 
-    generations = st.slider("Número de gerações", 10, 100, 30)
-    population_size = st.slider("Tamanho da população", 5, 50, 10)
+    generations = st.slider("Número de gerações", 10, 100, 30, key="gen_func")
+    population_size = st.slider("Tamanho da população", 5, 50, 10, key="pop_func")
 
     if st.button("Gerar Escala"):
-        history, fitness_values = run_with_tracking(create_individual_schedule, fitness_schedule,
-                                    selection_schedule, crossover_schedule, mutation_schedule,
-                                    generations, population_size)
+        history, fitness_values = run_with_tracking(
+            create_individual_schedule, fitness_schedule,
+            selection_schedule, crossover_schedule, mutation_schedule,
+            generations, population_size
+        )
         best, score = history[-1]
-        st.subheader(f"Melhor Escala (Fitness={score})")
-        st.table(pd.DataFrame.from_dict(best, orient='index', columns=["Funcionário"]))
+
+        st.subheader(f"Melhor Escala Encontrada (Fitness={score})")
+
+        # Criar DataFrame pivotado (linhas = Turnos, colunas = Dias)
+        rows = []
+        for dia, slots in best.items():
+            for i, f in enumerate(slots, start=1):
+                rows.append([dia, f"Turno {i}", f])
+
+        df = pd.DataFrame(rows, columns=["Dia", "Turno", "Funcionário"])
+        df_pivot = df.pivot(index="Turno", columns="Dia", values="Funcionário")
+
+        # Mapas de cores para cada funcionário
+        color_map = {
+            "Ana": "#FF9999", "Bruno": "#99CCFF", "Carlos": "#99FF99",
+            "Daniela": "#FFD699", "Eduardo": "#D699FF"
+        }
+        st.dataframe(df_pivot.style.applymap(lambda val: f"background-color: {color_map.get(val,'#FFFFFF')}"))
 
         st.subheader("Evolução do Fitness ao Longo das Gerações")
         fig = plot_fitness_evolution(fitness_values, generations, "Fitness - Funcionários")
