@@ -2,6 +2,7 @@ import random
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 # =========================
 # Núcleo Genérico do AG
@@ -73,12 +74,12 @@ def mutation_schedule(ind, rate=0.2):
 # =========================
 # 2. Cardápio Semanal
 # =========================
-refeicoes = ["Frango", "Peixe", "Carne", "Vegetariano", "Massa"]
+menu_itens = ["Frango", "Peixe", "Carne", "Vegetariano", "Massa"]
 dias_semana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"]
 calorias = {"Frango": 500, "Peixe": 400, "Carne": 700, "Vegetariano": 350, "Massa": 600}
 
 def create_individual_menu():
-    return {dia: random.choice(refeicoes) for dia in dias_semana}
+    return {dia: random.choice(menu_itens) for dia in dias_semana}
 
 def fitness_menu(ind):
     total = sum(calorias[ref] for ref in ind.values())
@@ -93,7 +94,7 @@ def crossover_menu(p1, p2):
 
 def mutation_menu(ind, rate=0.3):
     if random.random() < rate:
-        ind[random.choice(dias_semana)] = random.choice(refeicoes)
+        ind[random.choice(dias_semana)] = random.choice(menu_itens)
     return ind
 
 # =========================
@@ -136,18 +137,38 @@ def mutation_portfolio(ind, rate=0.2):
 # =========================
 st.title("Exemplos de Algoritmo Genético em Diferentes Contextos")
 
-menu = st.sidebar.selectbox("Escolha a aplicação:", [
-    "Escala de Funcionários",
-    "Cardápio Semanal",
-    "Portfólio de Investimentos",
-    "Explicação das Variáveis"
-])
+# menu = st.sidebar.selectbox("Escolha a aplicação:", [
+#     "Escala de Funcionários",
+#     "Cardápio Semanal",
+#     "Portfólio de Investimentos",
+#     "Explicação das Variáveis"
+# ])
+
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["📅 Escala de Funcionários", "🥗 Cardápio", "💰 Portfólio", "📊 Explicação das Variáveis"]
+)
 
 generations = st.sidebar.slider("Número de Gerações", 10, 100, 30)
 population_size = st.sidebar.slider("Tamanho da População", 5, 50, 15)
 
-if menu == "Escala de Funcionários":
-    st.header("Otimização da Escala de Funcionários")
+with tab1:
+    st.header("📅 Escala de Funcionários")
+
+    st.markdown("""
+    Nesta aplicação, usamos um **Algoritmo Genético** para criar uma escala de funcionários.
+    O objetivo é equilibrar os turnos entre todos, respeitando preferências e evitando sobrecarga.
+    """)
+
+    st.info(f"""
+    🔹 Funcionários disponíveis: {len(funcionarios)}
+    🔹 Turnos por dia: 1 (manhã, tarde ou noite)
+    🔹 Dias da semana: {len(dias)}
+    🔹 Total de posições a preencher: {len(funcionarios) * len(dias)}
+    """)
+
+    generations = st.slider("Número de gerações", 10, 100, 30)
+    population_size = st.slider("Tamanho da população", 5, 50, 10)
+
     if st.button("Gerar Escala"):
         history, fitness_values = run_with_tracking(create_individual_schedule, fitness_schedule,
                                     selection_schedule, crossover_schedule, mutation_schedule,
@@ -159,9 +180,25 @@ if menu == "Escala de Funcionários":
         st.subheader("Evolução do Fitness ao Longo das Gerações")
         fig = plot_fitness_evolution(fitness_values, generations, "Fitness - Funcionários")
         st.pyplot(fig)
+with tab2:
+    st.header("🥗 Otimização de Cardápio")
 
-elif menu == "Cardápio Semanal":
-    st.header("Otimização do Cardápio Semanal")
+    st.markdown("""
+    Aqui usamos o **Algoritmo Genético** para montar um cardápio semanal saudável e variado.
+    O objetivo é que as refeições tenham, em média, **2000 calorias por dia**.
+    """)
+
+    st.info(f"""
+    🔹 Itens disponíveis no menu: {len(menu_itens)}
+    🔹 Média de calorias dos itens: {np.mean([calorias[item] for item in menu_itens]):.0f} kcal
+    🔹 Dias da semana: {len(dias)}
+    🔹 Meta de calorias por dia: 2000 kcal
+    🔹 Tolerância: ± 200 kcal
+    """)
+
+    generations = st.slider("Número de gerações", 10, 100, 30, key="gen_cardapio")
+    population_size = st.slider("Tamanho da população", 5, 50, 10, key="pop_cardapio")
+
     if st.button("Gerar Cardápio"):
         history, fitness_values = run_with_tracking(create_individual_menu, fitness_menu,
                                     selection_menu, crossover_menu, mutation_menu,
@@ -176,22 +213,38 @@ elif menu == "Cardápio Semanal":
         fig = plot_fitness_evolution(fitness_values, generations, "Fitness - Cardápio")
         st.pyplot(fig)
 
-elif menu == "Portfólio de Investimentos":
-    st.header("Design de Portfólio de Investimentos")
+with tab3:
+    st.header("💰 Otimização de Portfólio de Investimentos")
+
+    st.markdown("""
+    Aqui usamos o **Algoritmo Genético** para montar um portfólio equilibrado.
+    O objetivo é **maximizar retorno esperado** e ao mesmo tempo **minimizar risco**.
+    """)
+
+    st.info(f"""
+    🔹 Quantidade de ativos disponíveis: {len(ativos)}
+    🔹 Média dos retornos esperados: {np.mean([retornos[item] for item in ativos]):.2%}
+    🔹 Média dos riscos (desvio padrão): {np.mean([risco[item] for item in ativos]):.2%}
+    🔹 Cada portfólio é representado como uma distribuição de pesos que somam 100%
+    """)
+
+    generations = st.slider("Número de gerações", 10, 100, 30, key="gen_portfolio")
+    population_size = st.slider("Tamanho da população", 5, 50, 10, key="pop_portfolio")
+
     if st.button("Gerar Portfólio"):
         history, fitness_values = run_with_tracking(create_individual_portfolio, fitness_portfolio,
                                     selection_portfolio, crossover_portfolio, mutation_portfolio,
                                     generations, population_size)
         best, score = history[-1]
         st.subheader(f"Melhor Portfólio (Fitness={score:.4f})")
-        df = pd.DataFrame({"Ativo": ativos, "Peso": best})
+        df = pd.DataFrame({"Ativo": ativos, "Peso (%)": [round(w * 100, 2) for w in best]})
         st.table(df)
 
         st.subheader("Evolução do Fitness ao Longo das Gerações")
         fig = plot_fitness_evolution(fitness_values, generations, "Fitness - Portfólio")
         st.pyplot(fig)
 
-elif menu == "Explicação das Variáveis":
+with tab4:
     st.header("O que significam as variáveis do Algoritmo Genético?")
     st.markdown("""
     ### 1. Fitness
