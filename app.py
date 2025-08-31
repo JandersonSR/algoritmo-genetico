@@ -214,6 +214,80 @@ with tab1:
         st.subheader("Evolução do Fitness ao Longo das Gerações")
         fig = plot_fitness_evolution(fitness_values, generations, "Fitness - Funcionários")
         st.pyplot(fig)
+
+        st.markdown("""
+        ---
+        ### Como o Algoritmo Genético funciona neste caso?
+
+
+        #### Representação do indivíduo:
+          Primeiramente, definimos a representação do indivíduo que são os funcionários escalados por dia
+
+          def create_individual_schedule():
+            return {dia: [random.choice(funcionarios) for _ in range(len(funcionarios))] for dia in dias}
+
+          Cada indivíduo é um dicionário: chave = dia (ex. "Seg"), valor = lista de len(funcionarios) slots (cada slot contém o nome do funcionário).
+          Exemplo (M = 5 funcionários, D = 5 dias): estrutura com 5 chaves e 5 valores por chave → 25 posições
+          - Ou seja, para cada dia da semana, temos uma lista de tamanho len(funcionarios)
+
+        #### Função de fitness (qualidade da solução)
+          Depois temos o cálculo da função de fitness. Que mede a qualidade da solução encontrada.
+          Neste caso, a função de fitness deve garantir que todos os funcionários tenham uma carga de trabalho equilibrada
+
+          def fitness_schedule(ind):
+            counts = {f: 0 for f in funcionarios}
+            for day_slots in ind.values():
+              for f in day_slots:
+                counts[f] = counts.get(f, 0) + 1
+            diff = max(counts.values()) - min(counts.values())
+            return -diff
+
+          - Conta quantos turnos cada funcionário recebeu (soma sobre todos os dias e slots).
+          - diff = máximo - mínimo das contagens.
+          - fitness = -diff. Como o AG maximiza fitness, valores menos negativos (= próximo de 0) são melhores
+
+          O Objetivo é equilibrar a carga de trabalho entre os funcionários.
+
+        #### Seleção (torneio entre 2 indivíduos)
+          def selection_schedule(population):
+              a, b = random.sample(population, 2)
+              return a if fitness_schedule(a) > fitness_schedule(b) else b
+
+         - Seleciona dois indivíduos aleatórios da população e retorna o que tem maior fitness (melhor solução). Isso é chamado de torneio de tamanho 2.
+
+        #### Crossover (mistura turnos dos pais)
+          def crossover_schedule(p1, p2):
+              child = {}
+              for dia in dias:
+                  child[dia] = random.choice([p1[dia], p2[dia]])
+              return child
+
+          - Para cada dia e para cada slot (posição) do dia escolhe aleatoriamente o valor do primeiro ou do segundo pai com prob. 0.5.
+          - Resultado: filho com cada slot vindo de um dos pais (recombinação ao nível de gene/slot).
+
+        #### Mutação (troca funcionário aleatório em um turno)
+        def mutation_schedule(individual):
+            dia = random.choice(dias)
+            i = random.randint(0, len(funcionarios) - 1)
+            f = random.choice(funcionarios)
+            individual[dia][i] = f
+            return individual
+
+          - Com probabilidade rate (20% por indivíduo por geração), escolhe um dia e um slot e atribui um funcionário aleatório a esse slot.
+          - Mutação evita perda de diversidade; permite explorar regiões do espaço de soluções que crossover talvez não alcance.
+
+        ### Resumo
+          - **Indivíduo**: representa uma escala semanal, onde cada dia possui uma lista de funcionários designados.
+          - **Fitness**: mede o equilíbrio da carga de trabalho.
+          - Contamos quantos turnos cada funcionário recebeu.
+          - O fitness é **negativo da diferença** entre o funcionário mais sobrecarregado e o menos escalado.
+          - Quanto menor a diferença, melhor o fitness.
+          - **Seleção**: escolhemos os melhores indivíduos comparando dois aleatórios (torneio).
+          - **Crossover**: mistura os turnos de dois pais, combinando escalas.
+          - **Mutação**: troca aleatoriamente um funcionário em um turno para explorar novas combinações.
+        ---
+        """)
+
 with tab2:
     st.header("🥗 Otimização de Cardápio")
 
