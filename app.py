@@ -219,7 +219,6 @@ with tab1:
         ---
         ### Como o Algoritmo Genético funciona neste caso?
 
-
         #### Representação do indivíduo:
           Primeiramente, definimos a representação do indivíduo que são os funcionários escalados por dia
 
@@ -320,6 +319,69 @@ with tab2:
         st.subheader("Evolução do Fitness ao Longo das Gerações")
         fig = plot_fitness_evolution(fitness_values, generations, "Fitness - Cardápio")
         st.pyplot(fig)
+
+    st.markdown("""
+    ---
+    ### Como o Algoritmo Genético funciona neste caso (Cardápio)?
+
+    #### Representação do indivíduo:
+      Cada indivíduo representa a distribuição de pratos ao longo dos dias da semana.
+
+      def create_individual_menu():
+        return {dia: random.choice(menu_itens) for dia in dias_semana}
+
+    - O indivíduo é um dicionário: chave = dia (ex. "Seg"), valor = prato escolhido.
+    - Exemplo: {"Seg": "Frango", "Ter": "Peixe", "Qua": "Massa", ...}
+    - Se tivermos D = 7 dias, cada indivíduo possui exatamente 7 genes (1 por dia).
+
+    #### Função de fitness (qualidade da solução):
+      Mede o quão equilibrada é a distribuição de calorias ao longo da semana.
+
+      def fitness_menu(ind):
+        total_cal = [calorias[ind[dia]] for dia in dias_semana]
+        diff = max(total_cal) - min(total_cal)
+        return -diff
+
+    - Para cada dia da semana, calcula as calorias do prato escolhido.
+    - Encontra a diferença entre o maior e o menor valor (desequilíbrio calórico).
+    - O fitness é o negativo dessa diferença: quanto mais próximo de 0, melhor.
+    - Objetivo: menus que distribuem calorias de forma equilibrada durante a semana.
+
+    #### Seleção (torneio entre 2 indivíduos)
+      def selection_menu(population):
+        a, b = random.sample(population, 2)
+        return a if fitness_menu(a) > fitness_menu(b) else b
+
+    - Escolhe dois menus aleatórios e mantém o mais equilibrado (maior fitness)
+
+    #### Crossover (mistura os pratos dos pais)
+      def crossover_menu(p1, p2):
+        child = {}
+        for dia in dias_semana:
+          child[dia] = random.choice([p1[dia], p2[dia]])
+        return child
+
+    - Para cada dia, o prato vem de p1 ou p2 com probabilidade de 50%.
+    - Assim, cria combinações novas de cardápio misturando os pais.
+
+    #### Mutação (troca um prato aleatório em um dia aleatório)
+      def mutation_menu(ind):
+        dia = random.choice(dias_semana)
+        ind[dia] = random.choice(menu_itens)
+        return ind
+
+    - Escolhe um dia aleatório e troca o prato por outro do menu.
+    - Em ~20% dos casos, troca o prato de um dia por outro aleatório.
+    - Mantém diversidade na população e evita soluções estagnadas.
+
+    #### Resumo:
+      - Indivíduo: cardápio semanal → 7 genes (1 prato por dia).
+      - Fitness: mede equilíbrio das calorias entre os dias.
+      - Seleção: compara dois cardápios, escolhe o melhor.
+      - Crossover: mistura cardápios dos pais.
+      - Mutação: altera um prato aleatório
+    ---
+    """)
 
 with tab3:
     st.header("💰 Otimização de Portfólio de Investimentos")
