@@ -1,0 +1,3 @@
+### Trabalho no Site: https://algoritmo-genetico.streamlit.app/
+
+### Código do projeto: https://github.com/jandersonsr/algoritmo-genetico/blob/main/app.py
